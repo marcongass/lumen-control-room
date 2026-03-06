@@ -4,12 +4,15 @@ export type LeadStage =
   | "qualified"
   | "contacted"
   | "negotiating"
-  | "converted";
+  | "converted"
+  | "lost";
 
 export type LeadCard = {
   id: string;
   company: string;
   industry: string;
+  companySize?: string;
+  source?: string;
   stage: LeadStage;
   score: number;
   owner: string;

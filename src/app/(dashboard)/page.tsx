@@ -1,6 +1,6 @@
 import { KanbanBoard } from "@/features/kanban";
 import { AgentRoster, AgentSkillMatrix } from "@/features/agents";
-import { LeadsPipelinePreview } from "@/features/leads";
+import { LeadsPipeline } from "@/features/leads";
 import { MetricCards } from "@/features/analytics";
 import { AutomationList } from "@/features/automations";
 
@@ -87,7 +87,9 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <LeadsPipelinePreview />
+            {/* Leads Pipeline (server component fetching Supabase) */}
+            {/* When Supabase env vars are missing the feature falls back to mock data, but the services already call Supabase. */}
+            <LeadsPipeline />
           </div>
 
           <div className="flex flex-col gap-4">
