@@ -1,5 +1,5 @@
 import { KanbanBoard } from "@/features/kanban";
-import { AgentRoster, AgentSkillMatrix } from "@/features/agents";
+import { AgentControlRoom } from "@/features/agents";
 import { LeadsPipeline } from "@/features/leads";
 import { MetricCards } from "@/features/analytics";
 import { AutomationList } from "@/features/automations";
@@ -94,8 +94,7 @@ export default function DashboardPage() {
 
           <div className="flex flex-col gap-4">
             <MetricCards />
-            <AgentRoster />
-            <AgentSkillMatrix />
+            <AgentControlRoom />
             <AutomationList />
             <div className="rounded-3xl border border-dashed border-white/20 bg-black/30 p-4 text-xs text-slate-400">
               Roadmap inmediato: conectar Leads Pipeline → agentes → prospecting automático → analytics.
