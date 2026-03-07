@@ -3,6 +3,7 @@ import { AgentControlRoom } from "@/features/agents";
 import { LeadsPipeline } from "@/features/leads";
 import { MetricCards } from "@/features/analytics";
 import { AutomationList } from "@/features/automations";
+import { OpportunityConsole } from "@/features/opportunities";
 
 const gamification = {
   level: "Lvl 03",
@@ -60,6 +61,7 @@ export default function DashboardPage() {
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,2.2fr)_minmax(320px,1fr)]">
           <div className="space-y-5">
+            <OpportunityConsole />
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>

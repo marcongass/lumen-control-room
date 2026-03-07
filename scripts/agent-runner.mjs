@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createClient } from "@supabase/supabase-js";
+import { getHandler, knownTaskTypes } from "./handlers/index.mjs";
 
 const url =
   process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -13,13 +14,7 @@ if (!url || !key) {
 
 const supabase = createClient(url, key, { auth: { persistSession: false } });
 const POLL_MS = Number(process.env.AGENT_WORKER_POLL ?? 5000);
-const TASK_TYPES = new Set([
-  "lead_discovery",
-  "lead_research",
-  "lead_scoring",
-  "outreach_generation",
-  "followup_check",
-]);
+const TASK_TYPES = new Set(knownTaskTypes());
 
 async function fetchQueuedTasks() {
   const now = new Date().toISOString();
@@ -52,7 +47,7 @@ async function claimTask(taskId) {
     .update({ status: "running", started_at: new Date().toISOString() })
     .eq("id", taskId)
     .eq("status", "queued")
-    .select("id, agent_id, task_type, payload")
+    .select("id, agent_id, task_type, payload, pipeline_id, parent_task_id")
     .single();
 
   if (error) {
@@ -69,12 +64,14 @@ async function completeTask(taskId, status, result) {
       status,
       finished_at: new Date().toISOString(),
       result,
+      last_error: status === "failed" ? result?.error : null,
     })
     .eq("id", taskId);
 }
 
 async function processTask(task) {
-  if (!TASK_TYPES.has(task.task_type)) {
+  const handler = getHandler(task.task_type);
+  if (!TASK_TYPES.has(task.task_type) || !handler) {
     await logEvent(task.id, task.agent_id, "task_failed", {
       reason: "unsupported_task_type",
       task_type: task.task_type,
@@ -85,13 +82,17 @@ async function processTask(task) {
 
   await logEvent(task.id, task.agent_id, "task_started");
 
-  // Simulación simple: aquí es donde irá la llamada real al agente/modelo.
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  await logEvent(task.id, task.agent_id, "task_completed", {
-    summary: "Simulación de ejecución",
-  });
-  await completeTask(task.id, "completed", { summary: "Simulación" });
+  try {
+    const result = await handler({ supabase, task });
+    await logEvent(task.id, task.agent_id, "task_completed", { result });
+    await completeTask(task.id, "completed", result);
+  } catch (error) {
+    console.error(`[agent-runner] handler error for ${task.task_type}`, error);
+    await logEvent(task.id, task.agent_id, "task_failed", {
+      reason: error.message,
+    });
+    await completeTask(task.id, "failed", { error: error.message });
+  }
 }
 
 async function loop() {

@@ -44,6 +44,7 @@ const fallbackHistory = [
 ];
 
 export type CreateLeadInput = {
+  opportunityId?: string;
   companyName: string;
   industry?: string;
   companySize?: string;
@@ -65,7 +66,10 @@ export async function listLeads() {
 
   const { data, error } = await client
     .from("leads")
-    .select("id, company_name, industry, company_size, source, status, score")
+    .select(
+      `id, opportunity_id, pipeline_state, company_name, industry, company_size, source, score,
+       opportunity:opportunities(id, type, company_name, industry, opportunity_score, status, has_website, website_url)`
+    )
     .order("created_at", { ascending: false });
 
   if (error || !data) {
@@ -73,15 +77,38 @@ export async function listLeads() {
     return { data: fallbackLeads, source: "mock" as const, error };
   }
 
+  type LeadRow = {
+    id: string;
+    opportunity_id?: string | null;
+    pipeline_state?: LeadStage;
+    company_name?: string | null;
+    industry?: string | null;
+    source?: string | null;
+    score?: number | null;
+    opportunity?: {
+      id: string;
+      type?: string;
+      company_name?: string | null;
+      industry?: string | null;
+      opportunity_score?: number | null;
+      status?: string | null;
+      has_website?: boolean | null;
+      website_url?: string | null;
+    } | null;
+  };
+
   return {
-    data: data.map<LeadCard>((lead) => ({
+    data: data.map<LeadCard>((lead: LeadRow) => ({
       id: lead.id,
-      company: lead.company_name,
-      industry: lead.industry ?? "",
-      stage: (lead.status as LeadStage) ?? "discovered",
-      score: Number(lead.score ?? 0),
-      owner: lead.source ?? "",
+      opportunityId: lead.opportunity_id ?? undefined,
+      company: lead.opportunity?.company_name ?? lead.company_name ?? "",
+      industry: lead.opportunity?.industry ?? lead.industry ?? "",
+      stage: lead.pipeline_state ?? "discovered",
+      score: Number(lead.opportunity?.opportunity_score ?? lead.score ?? 0),
+      owner: lead.source ?? lead.opportunity?.source ?? "",
       nextStep: "",
+      opportunityType: lead.opportunity?.type,
+      hasWebsite: lead.opportunity?.has_website ?? undefined,
     })),
     source: "supabase" as const,
   };
@@ -96,11 +123,13 @@ export async function createLead(input: CreateLeadInput) {
   const { data, error } = await client
     .from("leads")
     .insert({
+      opportunity_id: input.opportunityId ?? null,
       company_name: input.companyName,
       industry: input.industry,
       company_size: input.companySize,
       website: input.website,
       source: input.source,
+      pipeline_state: "discovered",
     })
     .select()
     .single();
@@ -119,6 +148,7 @@ export async function createLead(input: CreateLeadInput) {
 
   await logLeadEvent({
     leadId: data.id,
+    opportunityId: data.opportunity_id,
     eventType: "state_changed",
     toState: "discovered",
     metadata: { reason: "created" },
@@ -138,15 +168,24 @@ export async function updateLeadStatus(params: {
     throw new Error("Supabase client not configured");
   }
 
+  const { data: leadRow, error: fetchError } = await client
+    .from("leads")
+    .select("opportunity_id")
+    .eq("id", params.leadId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
   const { error } = await client
     .from("leads")
-    .update({ status: params.nextState })
+    .update({ pipeline_state: params.nextState })
     .eq("id", params.leadId);
 
   if (error) throw error;
 
   await logLeadEvent({
     leadId: params.leadId,
+    opportunityId: leadRow?.opportunity_id,
     eventType: "state_changed",
     fromState: params.fromState,
     toState: params.nextState,
@@ -156,6 +195,7 @@ export async function updateLeadStatus(params: {
 
 export async function logLeadEvent(params: {
   leadId: string;
+  opportunityId?: string | null;
   eventType: string;
   fromState?: LeadStage;
   toState?: LeadStage;
@@ -178,6 +218,19 @@ export async function logLeadEvent(params: {
   });
 
   if (error) throw error;
+
+  if (params.opportunityId) {
+    await client.from("opportunity_events").insert({
+      opportunity_id: params.opportunityId,
+      event_type: params.eventType,
+      metadata: {
+        ...params.metadata,
+        lead_id: params.leadId,
+        from_state: params.fromState,
+        to_state: params.toState,
+      },
+    });
+  }
 }
 
 export async function getLeadHistory(leadId: string) {

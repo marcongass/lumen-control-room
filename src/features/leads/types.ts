@@ -9,6 +9,7 @@ export type LeadStage =
 
 export type LeadCard = {
   id: string;
+  opportunityId?: string;
   company: string;
   industry: string;
   companySize?: string;
@@ -17,4 +18,6 @@ export type LeadCard = {
   score: number;
   owner: string;
   nextStep: string;
+  opportunityType?: string;
+  hasWebsite?: boolean;
 };

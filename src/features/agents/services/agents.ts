@@ -157,6 +157,9 @@ export async function enqueueAgentTask(params: {
   payload?: Record<string, unknown>;
   priority?: number;
   scheduledFor?: Date;
+  pipelineId?: string;
+  parentTaskId?: string;
+  maxAttempts?: number;
 }) {
   const client = getSupabaseClient();
   if (!client) throw new Error("Supabase client not configured");
@@ -169,6 +172,9 @@ export async function enqueueAgentTask(params: {
       payload: params.payload ?? {},
       priority: params.priority ?? 0,
       scheduled_for: params.scheduledFor ?? new Date().toISOString(),
+      pipeline_id: params.pipelineId ?? params.payload?.opportunity_id ?? null,
+      parent_task_id: params.parentTaskId ?? null,
+      max_attempts: params.maxAttempts ?? 1,
     })
     .select()
     .single();
