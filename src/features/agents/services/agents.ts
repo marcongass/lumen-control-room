@@ -1,6 +1,6 @@
-@@ -68,7 +68,7 @@
-     .from("agent_tasks")
-     .select("agent_id, status, count:count(*)")
--    .group("agent_id,status");
-+    .group("agent_id", "status");
+@ -1,2 +1,2 @@
+-import { createClient } from 'supabase';
+-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
++// import { createClient } from 'supabase';
++// const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 ```
