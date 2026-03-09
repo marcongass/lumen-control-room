@@ -60,8 +60,8 @@ export async function createOrUpdateOpportunity(input: OpportunityInput & { scor
     opportunity_score: opportunityScore,
   };
 
-  const { data, error } = await client
-    .from("opportunities")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (client.from("opportunities") as any)
     .upsert(payload, { onConflict: "source_ref" })
     .select()
     .single();
@@ -96,7 +96,8 @@ export async function listOpportunities(limit = 20) {
 export async function logOpportunityEvent(opportunityId: string, eventType: string, metadata?: Record<string, unknown>) {
   const client = getSupabaseClient();
   if (!client) return;
-  await client.from("opportunity_events").insert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (client.from("opportunity_events") as any).insert({
     opportunity_id: opportunityId,
     event_type: eventType,
     metadata: metadata ?? {},

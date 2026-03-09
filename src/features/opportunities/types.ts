@@ -12,6 +12,7 @@ export type Opportunity = {
   type: OpportunityType;
   title?: string | null;
   company_name?: string | null;
+  industry?: string | null;
   description?: string | null;
   source?: string | null;
   source_ref?: string | null;

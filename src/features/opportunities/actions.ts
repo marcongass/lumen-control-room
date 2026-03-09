@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { enqueueAgentTask } from "@/features/agents/services/agents";
+import { enqueueAgentTask, AgentTaskType } from "@/features/agents/services/agents";
 
 export async function createDiscoveryTaskAction(formData: FormData) {
   const query = formData.get("query")?.toString().trim();
@@ -14,7 +14,7 @@ export async function createDiscoveryTaskAction(formData: FormData) {
   }
 
   await enqueueAgentTask({
-    taskType: "business_discovery",
+    taskType: "business_discovery" as AgentTaskType,
     payload: {
       query,
       city,

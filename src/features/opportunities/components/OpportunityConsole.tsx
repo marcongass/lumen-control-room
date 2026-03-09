@@ -53,7 +53,7 @@ export async function OpportunityConsole() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-white">{opp.company_name ?? opp.title ?? "Sin nombre"}</p>
-                <p className="text-xs text-slate-400">{opp.industry ?? opp.type}</p>
+                <p className="text-xs text-slate-400">{opp.type}</p>
               </div>
               <span className="text-xs text-emerald-300">Score {opp.opportunity_score ?? 0}</span>
             </div>
