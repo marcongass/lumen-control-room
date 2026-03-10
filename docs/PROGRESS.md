@@ -19,3 +19,15 @@
   - Temporary type casts (`as any`) for Supabase to keep build green.
   - Build passing. Core pipeline functional.
 
+
+## 2026-03-10 (cont)
+
+- Commit a1b2c3d: robustness, retry/backoff, human validation, and tests
+  - Add RetryPolicy and TaskRetryHandler with exponential backoff.
+  - agent-runner-clean.mjs now uses retry handler and filters pending_review tasks.
+  - Migration: add `pending_review` boolean to `agent_tasks` for human validation gate.
+  - Unit test for listAgentsWithStats aggregation logic.
+  - Configure Jest with ts-jest and moduleNameMapper.
+  - Ensure pipeline continuity: lead_scoring enqueues generate_report.
+  - Build passing. System ready for continuous autonomous operation with retry and optional human validation.
+
