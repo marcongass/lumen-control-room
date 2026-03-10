@@ -1,6 +1,7 @@
 import { handleBusinessDiscovery } from "./business-discovery.mjs";
 import { handleCompanyResearch } from "./company-research.mjs";
 import { handleLeadScoring } from "./lead-scoring.mjs";
+import { handleGenerateReport } from "./generate-report.mjs";
 
 const registry = new Map();
 
@@ -12,6 +13,9 @@ registry.set("company_research", handleCompanyResearch);
 
 // Scoring tasks
 registry.set("lead_scoring", handleLeadScoring);
+
+// Report tasks
+registry.set("generate_report", handleGenerateReport);
 
 export function getHandler(taskType) {
   return registry.get(taskType);
