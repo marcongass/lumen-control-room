@@ -1,5 +1,17 @@
+
 import { NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+interface LeadReport {
+  id: string;
+  company_name: string;
+  industry: string | null;
+  opportunity_score: number;
+  location: any; // { address?: string; ... }
+  source: string;
+}
+
 
 export async function GET() {
   const client = getSupabaseClient(); if (!client) return NextResponse.json({ error: 'Database not available' }, { status: 503 });
@@ -22,7 +34,7 @@ export async function GET() {
   return NextResponse.json({
     timestamp: new Date().toISOString(),
     count: data?.length || 0,
-    leads: data?.map((lead: any) => ({
+    leads: data?.map((lead: LeadReport) => ({
       id: lead.id,
       name: lead.company_name,
       industry: lead.industry,
