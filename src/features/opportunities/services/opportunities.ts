@@ -93,6 +93,41 @@ export async function listOpportunities(limit = 20) {
   return data as Opportunity[];
 }
 
+export type DiscoveryTaskRun = {
+  id: string;
+  task_type: string;
+  status: string;
+  priority: number;
+  scheduled_for: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+  created_at: string;
+  payload?: Record<string, unknown> | null;
+  result?: Record<string, unknown> | null;
+  last_error?: string | null;
+};
+
+export async function listDiscoveryTaskRuns(limit = 8) {
+  const client = getSupabaseClient();
+  if (!client) return [] as DiscoveryTaskRun[];
+
+  const { data, error } = await client
+    .from("agent_tasks")
+    .select(
+      "id, task_type, status, priority, scheduled_for, started_at, finished_at, created_at, payload, result, last_error"
+    )
+    .in("task_type", ["business_discovery", "company_research"])
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) {
+    console.error("listDiscoveryTaskRuns error", error);
+    return [];
+  }
+
+  return data as DiscoveryTaskRun[];
+}
+
 export async function logOpportunityEvent(opportunityId: string, eventType: string, metadata?: Record<string, unknown>) {
   const client = getSupabaseClient();
   if (!client) return;

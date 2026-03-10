@@ -1,6 +1,8 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 export type AgentTaskType =
+  | "business_discovery"
+  | "company_research"
   | "lead_discovery"
   | "lead_research"
   | "lead_scoring"
@@ -45,7 +47,7 @@ const fallbackTasks = [
   {
     id: "task-mock-1",
     agent_id: "agent-mock-1",
-    task_type: "lead_discovery" as AgentTaskType,
+    task_type: "business_discovery" as AgentTaskType,
     status: "queued",
     priority: 5,
     scheduled_for: new Date().toISOString(),
