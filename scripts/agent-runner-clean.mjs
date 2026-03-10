@@ -1,8 +1,8 @@
-// Simple agent runner for Node.js
-// Polls for pending tasks and executes them
+// Improved agent runner with retry/backoff and human validation
 
-import { getHandler } from "./handlers/index.mjs";
+import { getHandler } from '@/handlers/index.mjs';
 import { getSupabaseClient } from '@/lib/supabase/client'";
+import { RetryPolicy, TaskRetryHandler } from '@/lib/retry';
 
 async function main() {
   console.log("🔄 Starting worker...");
@@ -17,12 +17,13 @@ async function main() {
     try {
       console.log("🔄 Checking for tasks...");
       
+      // Get pending tasks with priority and exclude those pending review
       const { data: tasks, error } = await client
         .from("agent_tasks")
         .select("*")
         .eq("status", "pending")
-        .order("priority", { ascending: false })
-        .limit(10);
+        .eq("pending_review", false)  // exclude pending review
+        .order("priority", { ascending: false });
 
       if (error) {
         console.error("❌ Error fetching tasks:", error.message);
@@ -54,26 +55,13 @@ async function main() {
             .update({ status: "running" })
             .eq("id", task.id);
 
-          // Execute task
-          const result = await handler({
-            supabase: client,
-            task,
-          });
-
-          // Mark task as completed
-          await client
-            .from("agent_tasks")
-            .update({ status: "completed", result })
-            .eq("id", task.id);
+          // Execute task with retry
+          const result = await TaskRetryHandler.executeWithRetry(client, task, handler);
 
           console.log(`✅ Task ${task.task_type} completed`);
         } catch (err) {
           console.error(`❌ Task ${task.task_type} failed:`, err.message);
-          // Mark task as failed
-          await client
-            .from("agent_tasks")
-            .update({ status: "failed", result: { error: err.message } })
-            .eq("id", task.id);
+          // Mark task as failed (handled by retry handler)
         }
       }
 
